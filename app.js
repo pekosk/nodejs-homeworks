@@ -23,5 +23,3 @@ app.use((err, req, res, next) => {
 })
 
 module.exports = app
-
-// bY0XuO4lRrWgFKJ3
