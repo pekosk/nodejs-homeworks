@@ -102,7 +102,7 @@ router.patch("/:contactId/favorite", async (req, res, next) => {
     console.log(error);
 
     if (error) {
-      throw createError(400, "missing fields");
+      throw createError(400, "missing field favorite");
     }
 
     const result = await Contact.findByIdAndUpdate(contactId, body,{new:true});

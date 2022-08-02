@@ -19,7 +19,7 @@ const contactSchema = Schema({
     },
   });
 
-  const Contact = model("contact", contactSchema);//название - существительное в единственном числе с большой буквы
+  const Contact = model("contact", contactSchema);
 
   const contactsAddSchema = Joi.object({
     name: Joi.string().required(),
