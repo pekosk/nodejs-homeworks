@@ -4,7 +4,7 @@ const createError = require("http-errors");
 
 const router = express.Router();
 
- const {Contact,schemas} = require("../../models/contact");
+ const {Contact,schemas} = require("../../models/contacts");
 
 const {contactsAddSchema,contactUpdateSchema,contactUpdateFavoriteSchema} = schemas;
 
