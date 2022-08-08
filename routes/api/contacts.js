@@ -1,84 +1,115 @@
 const express = require("express");
-const createError = require("http-errors")
-const Joi = require('joi')
 
-const contacts = require('../../models/contacts')
+const createError = require("http-errors");
 
-const router = express();
+const router = express.Router();
 
-const contactSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().required(),
-  phone: Joi.string().required()
+ const {Contact,schemas} = require("../../models/contacts");
+
+const {contactsAddSchema,contactUpdateSchema,contactUpdateFavoriteSchema} = schemas;
+
+router.get("/", async (req, res, next) => {
+  try {
+    const result = await Contact.find();
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get('/', async (req, res, next) => {
+router.get("/:contactId", async (req, res, next) => {
   try {
-    const result = await contacts.listContacts();
-    res.json(result);
-  } 
-  catch(error) {
-    next(error)
-  }
-})
+    const { contactId } = req.params;
 
-router.get('/:contactId', async (req, res, next) => {
-  try {
-    const {contactId} = req.params;
-    const result = await contacts.getContactById(contactId);
-    if(!result) {
-      throw createError(404, 'Not found');
+    const result = await Contact.findById(contactId);
+
+    if (!result) {
+      throw createError(404, "Not found");
     }
     res.json(result);
-  } catch(error) {
-    next(error)
-  }
-})
-
-router.post('/', async (req, res, next) => {
-  try {
-    const {error} = contactSchema.validate(req.body);
-    if(error) {
-      throw createError(400, error.message);
+  } catch (error) {
+    if(error.message.includes("Cast to ObjectId failed")){
+      error.status=404;
     }
-    const { name, email, phone } = req.body;
-    const result = await contacts.addContact(name, email, phone);
+    next(error);
+  }
+});
+
+router.post("/", async (req, res, next) => {
+  try {
+    const { error } = contactsAddSchema.validate(req.body);
+
+    if (error) {
+      throw createError(400, "missing required name field");
+    }
+
+    const result = await Contact.create(req.body);
+
     res.status(201).json(result);
-  } catch(error) {
+  } catch (error) {
+    if (error.message.includes="validation failed"){
+      error.status=400;
+    }
     next(error);
   }
-})
+});
 
-router.delete('/:contactId', async (req, res, next) => {
+router.delete("/:contactId", async (req, res, next) => {
   try {
-    const {contactId} = req.params;
-    const result = await contacts.removeContact(contactId);
-    if(!result) {
-      throw createError(404, 'Not found');
-    }
-    res.json({
-      "message": "product deleted"
-    });
-  } catch(error) {
-    next(error)
-  }
-})
+    const { contactId } = req.params;
 
-router.put('/:id', async (req, res, next) => {
-  try {
-    const {error} = contactSchema.validate(req.body);
-    if(error) {
-      throw createError(400, error.message);
+    const result = await Contact.findByIdAndDelete(contactId);
+
+    if (!result) {
+      throw createError(404, "Not found");
     }
-    const {id} = req.params;
-    const result = await contacts.updateContact(id, req.body);
-    if(!result) {
-      throw createError(404, 'Not found');
-    }
-    res.json(result)
-  } catch(error) {
+
+    res.json({ message: "contact deleted" });
+  } catch (error) {
     next(error);
   }
-})
+});
 
-module.exports = router
+router.put("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+
+    const body = req.body;
+
+    const { error } = contactUpdateSchema.validate(body);
+
+    console.log(error);
+
+    if (error) {
+      throw createError(400, "missing fields");
+    }
+
+    const result = await Contact.findByIdAndUpdate(contactId, body,{new:true});
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+
+    const body = req.body;
+
+    const { error } = contactUpdateFavoriteSchema.validate(body);
+
+    console.log(error);
+
+    if (error) {
+      throw createError(400, "missing field favorite");
+    }
+
+    const result = await Contact.findByIdAndUpdate(contactId, body,{new:true});
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+module.exports = router;
